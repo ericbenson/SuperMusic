@@ -1,6 +1,7 @@
 var utils = require('./utils.js');
 var path = require('path');
 var Promise = require('bluebird');
+var seedDBUtils = require('../seedDBServer/utils.js');
 
 module.exports.getRelatedSong = function(req, res){
 
@@ -41,15 +42,18 @@ module.exports.getRelatedSong = function(req, res){
 
 module.exports.get11Songs = function(req, res){
   var playedSongs = req.body;
-  utils.multipleSongs(11,playedSongs).then(function(songs){
+  utils.multipleSongs(11,playedSongs, [], function(songs){
+    console.log('ready to send');
     res.status(200).send(songs);
   });
-}
+};
 
 
 module.exports.get3Songs = function(req, res){
   var playedSongs = req.body;
-  utils.multipleSongs(3,playedSongs).then(function(songs){
+  console.log('getting song');
+  utils.multipleSongs(3,playedSongs,[],function(songs){
+    console.log('got song');
     res.status(200).send(songs);
   });
 }
@@ -78,8 +82,6 @@ module.exports.trainingWorker = function(req, res){
 module.exports.getHistory = function(req, res){
   var user = req.user.id;
 
-  console.log('testing the user on the req',req.user);  
-
   var query = utils.retrieveRecords(user);
 
   query.exec(function(err,records){
@@ -90,12 +92,25 @@ module.exports.getHistory = function(req, res){
 
 module.exports.saveRecord = function(req, res){
   var user = req.user.id;
-  var record = req.body;
-
-  console.log('testing the user on the req',req.user); 
-  console.log('testing the body on the req',req.body);  
+  var record = req.body;  
 
   utils.saveToDB(user,record);
 
   res.status(200);
+};
+
+module.exports.search = function(req, res){
+  var artist = req.body.artist;
+  var playedSongs = req.body.playedSongs;
+
+  console.log('testing the body on the req',req.body);  
+
+  utils.saveSearchResults(artist, playedSongs).then(function(song){
+    utils.multipleSongs(10,playedSongs,[],function(songs){
+      console.log(song);
+      songs.unshift(song);
+      res.status(200).send(songs);
+    });
+  });
+
 };

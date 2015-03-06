@@ -83,15 +83,24 @@ module.exports.dropSongs = function(futureSongs){
   return futureSongs;
 }
 
-module.exports.addSongs = function(url, retrained, futureSongs, fetchedSongs, net){
+module.exports.addSongs = function(url, retrained, futureSongs, fetchedSongs, net, artist){
   return new Promise(function(resolve){
-    getSongs(fetchedSongs, url).then(function(songs){
-      songs.forEach(function(song){
-        fetchedSongs.push([song.title,song.artist_name,song.score]);
-        futureSongs.push(song);
-        song = module.exports.likability(song, net);
-        resolve({futureSongs:futureSongs, fetchedSongs:fetchedSongs});
-      });
+    //make fetchedSongs an object if there is an artist to allow searching
+    console.log('adding songs !!!!!');
+    var data = (artist ? {artist: artist, playedSongs: fetchedSongs} : fetchedSongs);
+    console.log('data',data);
+    getSongs(data, url).then(function(songs){
+      console.log('addsongs',songs);
+      if(songs[0] ==='No Artist Found'){
+        resolve(songs[0]);
+      } else {
+        songs.forEach(function(song){
+          fetchedSongs.push([song.title,song.artist_name,song.score]);
+          futureSongs.push(song);
+          song = module.exports.likability(song, net);
+          resolve({futureSongs:futureSongs, fetchedSongs:fetchedSongs});        
+        });
+      };
     })
   });
 };
@@ -161,4 +170,6 @@ module.exports.getBrainData = function(){
     });
   })
 };
+
+
 

@@ -148,6 +148,18 @@ AppDispatcher.register(function(action) {
       AppStore.emitChange();      
       break;
 
+    case AppConstants.NO_SEARCH_RESULTS:
+      var current = action.current;
+
+      _currentSong = current.title;
+      _currentArtist = current.artist_name;
+      _songAudio = current.preview_url;
+      _albumArt = current.image;
+      _fullSong = current.spotify_url;
+
+      AppStore.emitChange();      
+      break;
+
     default:
       // no op
   }

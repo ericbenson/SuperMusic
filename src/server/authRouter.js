@@ -31,6 +31,9 @@ authRouter.get('/getHistory', ensureAuthenticated, requestHandler.getHistory);
 
 authRouter.post('/saveRecord', ensureAuthenticated, requestHandler.saveRecord);
 
+authRouter.post('/search', ensureAuthenticated, requestHandler.search);
+
+
 authRouter.get('/auth/spotify',
   auth.authenticate('spotify', {scope: 'user-read-private'}),
   function(req, res){

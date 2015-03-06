@@ -39605,15 +39605,24 @@ module.exports.dropSongs = function(futureSongs){
   return futureSongs;
 }
 
-module.exports.addSongs = function(url, retrained, futureSongs, fetchedSongs, net){
+module.exports.addSongs = function(url, retrained, futureSongs, fetchedSongs, net, artist){
   return new Promise(function(resolve){
-    getSongs(fetchedSongs, url).then(function(songs){
-      songs.forEach(function(song){
-        fetchedSongs.push([song.title,song.artist_name,song.score]);
-        futureSongs.push(song);
-        song = module.exports.likability(song, net);
-        resolve({futureSongs:futureSongs, fetchedSongs:fetchedSongs});
-      });
+    //make fetchedSongs an object if there is an artist to allow searching
+    console.log('adding songs !!!!!');
+    var data = (artist ? {artist: artist, playedSongs: fetchedSongs} : fetchedSongs);
+    console.log('data',data);
+    getSongs(data, url).then(function(songs){
+      console.log('addsongs',songs);
+      if(songs[0] ==='No Artist Found'){
+        resolve(songs[0]);
+      } else {
+        songs.forEach(function(song){
+          fetchedSongs.push([song.title,song.artist_name,song.score]);
+          futureSongs.push(song);
+          song = module.exports.likability(song, net);
+          resolve({futureSongs:futureSongs, fetchedSongs:fetchedSongs});        
+        });
+      };
     })
   });
 };
@@ -39686,6 +39695,8 @@ module.exports.getBrainData = function(){
 
 
 
+
+
 },{"bluebird":2}],303:[function(require,module,exports){
 var AppDispatcher = require('../dispatcher/AppDispatcher.jsx');
 var AppConstants = require('../constants/AppConstants.jsx');
@@ -39734,23 +39745,38 @@ function train (){
     }
 }
 
-function getSongsAndUpdate(url){
+function getSongsAndUpdate(url, artist){
   //use url to hit the corresponding route on the serve to get 3 or 10 songs
-  ActionUtils.addSongs(url,retrained, futureSongs, fetchedSongs, net)
+  ActionUtils.addSongs(url,retrained, futureSongs, fetchedSongs, net, artist)
   .then(function(updates){
-    //if first time fetching and length 11
-    if(updates.futureSongs.length === 11){
-      playedSongs.unshift(updates.futureSongs.shift());
-      futureSongs = updates.futureSongs;
-      fetchedSongs = updates.fetchedSongs;
-      AppActions.play();
+    console.log('updates',updates);
 
-    } else { 
-      futureSongs = ActionUtils.reorder(updates.futureSongs, net, retrained);
-      fetchedSongs = updates.fetchedSongs;
-      console.log('newfuturesongs',futureSongs)
+    if(updates ==='No Artist Found'){
+      AppActions.noSearchResults();
+    } else {
+      //if first time fetching and length 11
+      if(updates.futureSongs.length===21){
+        updates.futureSongs = updates.futureSongs.slice(10);
+      }
 
-      AppActions.updateFutureList();
+      if(updates.futureSongs.length === 11){
+        playedSongs.unshift(updates.futureSongs.shift());
+        futureSongs = updates.futureSongs;
+        fetchedSongs = updates.fetchedSongs;
+
+        console.log('testing');
+
+        console.log(updates);
+        console.log(futureSongs);
+        AppActions.play();
+
+      } else { 
+        futureSongs = ActionUtils.reorder(updates.futureSongs, net, retrained);
+        fetchedSongs = updates.fetchedSongs;
+        console.log('newfuturesongs',futureSongs)
+
+        AppActions.updateFutureList();
+      }  
     }
 
   })
@@ -39797,8 +39823,24 @@ var AppActions = {
   },    
 
   generateFuturePlaylist: function(){
-    futureSongs=[];
     getSongsAndUpdate('/11songs');
+  },
+
+  search: function(artist){
+    getSongsAndUpdate('/search',artist);
+  },
+
+  noSearchResults: function(){
+    var current = {};
+    current.title = 'Song not found';
+    current.artist_name = 'Artist not found';
+    current.image = 'http://immo.krips.com/images/hata.png';
+    current.spotify_url = null;
+
+    AppDispatcher.dispatch({
+      actionType: AppConstants.NO_SEARCH_RESULTS,
+      current: current
+    });    
   },
 
   getPriorHistory: function(){
@@ -40029,7 +40071,16 @@ var Header = React.createClass({displayName: "Header",
 
   getRandomSong: function(){
     AppActions.generateFuturePlaylist();
+    console.log('getting future playlist');
+    
   },
+
+  search: function(){
+    console.log(this.refs.textInput.getDOMNode().value.trim());
+    var artist = this.refs.textInput.getDOMNode().value.trim();
+    AppActions.search(artist);
+  },
+
 
   render: function() {
     return (
@@ -40037,10 +40088,10 @@ var Header = React.createClass({displayName: "Header",
         React.createElement("h1", null, "Q-Rad.io"), 
         React.createElement("form", {className: "header-form"}, 
           React.createElement("span", null, " Choose the song:",  
-            React.createElement("input", {type: "text", size: "34", placeholder: "select your song brotha!"})
+            React.createElement("input", {ref: "textInput", type: "text", size: "34", placeholder: "select your song brotha!"})
           ), 
-          React.createElement(RaisedButton, {className: "header-btn", value: "go", id: "go", name: "go", label: "Go", primary: true}), 
-          React.createElement(RaisedButton, {className: "header-btn", label: "Random", primary: true, onClick: this.getRandomSong})
+          React.createElement(RaisedButton, {type: "button", className: "header-btn", value: "go", id: "go", name: "go", label: "Go", primary: true, onClick: this.search}), 
+          React.createElement(RaisedButton, {type: "button", className: "header-btn", label: "Random", primary: true, onClick: this.getRandomSong})
         )
       )
     )
@@ -40501,7 +40552,9 @@ module.exports = keyMirror({
   UPDATE_PLAYED: null,
   UPDATE_FUTURE: null,
   STAR: null,
-  SELECT_ANY: null
+  SELECT_ANY: null,
+  NO_SEARCH_RESULTS: null
+
 });
 
 },{"keymirror":33}],317:[function(require,module,exports){
@@ -40676,6 +40729,18 @@ AppDispatcher.register(function(action) {
       current = action.current;
       future = action.future;
       AppStore.update(played, current, future);
+      AppStore.emitChange();      
+      break;
+
+    case AppConstants.NO_SEARCH_RESULTS:
+      var current = action.current;
+
+      _currentSong = current.title;
+      _currentArtist = current.artist_name;
+      _songAudio = current.preview_url;
+      _albumArt = current.image;
+      _fullSong = current.spotify_url;
+
       AppStore.emitChange();      
       break;
 

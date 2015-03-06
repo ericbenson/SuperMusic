@@ -12,7 +12,16 @@ var Header = React.createClass({
 
   getRandomSong: function(){
     AppActions.generateFuturePlaylist();
+    console.log('getting future playlist');
+    
   },
+
+  search: function(){
+    console.log(this.refs.textInput.getDOMNode().value.trim());
+    var artist = this.refs.textInput.getDOMNode().value.trim();
+    AppActions.search(artist);
+  },
+
 
   render: function() {
     return (
@@ -20,10 +29,10 @@ var Header = React.createClass({
         <h1>Q-Rad.io</h1>
         <form className="header-form">
           <span> Choose the song: 
-            <input type="text" size="34" placeholder='select your song brotha!'></input>
+            <input ref="textInput" type="text" size="34" placeholder='select your song brotha!'></input>
           </span>
-          <RaisedButton className="header-btn" value="go" id="go" name="go" label="Go" primary={true} />
-          <RaisedButton className="header-btn" label="Random" primary={true} onClick={this.getRandomSong} />
+          <RaisedButton type="button" className="header-btn" value="go" id="go" name="go" label="Go" primary={true} onClick={this.search} />
+          <RaisedButton type="button" className="header-btn" label="Random" primary={true} onClick={this.getRandomSong} />
         </form>
       </div>
     )
