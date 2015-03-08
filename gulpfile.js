@@ -46,6 +46,7 @@
     .task( 'html:dev'     , tasks.html.dev)
     .task( 'assets:dev'   , tasks.assets.dev)
     .task( 'compile:dev'  , tasks.compile.dev)
+    .task( 'loginCompile:dev'  , tasks.loginCompile.dev)
     .task( 'build:dev',
       $.sequence( 'js:dev'
                 , 'less:dev'
@@ -53,6 +54,7 @@
                 , 'html:dev'
                 , 'assets:dev'
                 , 'compile:dev'
+                , 'loginCompile:dev'
                 ));
 
   //=================START

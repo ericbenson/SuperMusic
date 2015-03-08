@@ -8,9 +8,9 @@ var server = require("../../src/server/server.js");
 
 describe('testing', function() {
 
-it("should return a 200 response", function (done) {
+it("should return a 302 response", function (done) {
 	    http.get("http://localhost:8000", function (res) {
-	        assert.equal(res.statusCode, 200);
+	        assert.equal(res.statusCode, 302);
 	        done();
 	    });
 

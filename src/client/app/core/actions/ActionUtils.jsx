@@ -70,7 +70,7 @@ module.exports.likability = function(song, net){
       }  
     }
     futureSongs.sort(function(a,b){
-      return a.likability - b.likability;
+      return b.likability - a.likability;
     });
   }
     return futureSongs;

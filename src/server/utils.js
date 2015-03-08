@@ -9,6 +9,8 @@ var request = require('request');
 
 
 var echonestArtist = process.env.echonestArtist || require('../../.ENV').echonestArtist;
+var client_id = process.env.spotifykey || require('../../.ENV').spotifykey; // Your client id
+var client_secret = process.env.spotifysecret || require('../../.ENV').spotifysecret; // Your client secret
 
 
 var randomSong = function(songs){
@@ -269,7 +271,7 @@ var createPlaylist = function(url, access_token){
   });
 };
 
-module.exports.addTrackToPlaylist = function(url, access_token, track){
+module.exports.addTrackToPlaylist = function(url, access_token, refresh_token, track){
   return new Promise(function(resolve){
     request.post({
         headers: {'Authorization': 'Bearer '+access_token, 'content-type' : 'application/json'},
@@ -278,7 +280,25 @@ module.exports.addTrackToPlaylist = function(url, access_token, track){
       }, function(error, response, body){
         console.log('added to playlist?');
         console.log(body);
-        resolve(true);
+        var saved = JSON.parse(body).snapshot_id;
+        if(saved === 'undefined'){
+          resolve(getRefreshToken(refresh_token))
+        } else{
+          resolve(false);
+        }
       });
   });
+};
+
+var getRefreshToken = function(refresh_token){
+  return new Promise(function(resolve){
+    request.post({
+        headers: {'Authorization': 'Basic '+ (new Buffer(client_id + ':' + client_secret).toString('base64'))},
+        url:     'https://accounts.spotify.com/api/token',
+        body:    JSON.stringify({'grant_type': 'refresh_token', 'refresh_token':refresh_token})
+      }, function(error, response, body){
+        var token = JSON.parse(body).access_token;
+        resolve(token);
+      });
+  });  
 };

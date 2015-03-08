@@ -67,7 +67,7 @@ function getSongsAndUpdate(url, artist){
       } else { 
         futureSongs = ActionUtils.reorder(updates.futureSongs, net, retrained);
         fetchedSongs = updates.fetchedSongs;
-
+        console.log('FUTURESONGS!!!',futureSongs);
         AppActions.updateFutureList();
       }  
     }

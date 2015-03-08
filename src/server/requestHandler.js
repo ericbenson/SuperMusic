@@ -139,11 +139,20 @@ module.exports.addToPlaylist = function(req, res){
   var url = 'https://api.spotify.com/v1/users/'+req.user.id+'/playlists/'+playlist_ID+'/tracks';
 
   var access_token = req.cookies.access_token;
+  var refresh_token = req.cookies.refresh_token;
 
-  utils.addTrackToPlaylist(url, access_token,track_ID).then(function(playlistID){
+
+  utils.addTrackToPlaylist(url, access_token, refresh_token, track_ID).then(function(newToken){
 
     console.log('success!!!!');
-    res.status(200).send();
+    if(!newToken){
+      res.status(200).send();
+    } else {
+      res.cookie('access_token', token);
+      req.cookies.access_token = token;
+      modue.exports.addToPlaylist(req, res);
+    }
+
   });
 
 };
